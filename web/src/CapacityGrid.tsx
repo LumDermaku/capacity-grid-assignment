@@ -1,22 +1,122 @@
+import { useState } from 'react'
+import type { PersonCapacity } from './api'
+import { shortDate } from './dates'
+import { useCapacity, useUpdateWeeklyHours } from './queries'
+
 type Props = {
   from: string
   to: string
 }
 
-// CapacityGrid renders one row per person and one column per week, showing
-// how allocated each person is and making over-allocation obvious.
-//
-// It reads from GET /api/capacity?from=&to= — the response shape is whatever
-// you decided on in the API.
-//
-// A person's weekly hours are editable from the grid. After a save, every
-// number that depends on them must be right — without a full page reload.
-//
-// TODO: implement.
 export function CapacityGrid({ from, to }: Props) {
+  const { data, error, isPending, isFetching, isPlaceholderData, refetch } = useCapacity(from, to)
+
+  if (isPending) return <p className="status">Loading…</p>
+
   return (
-    <p>
-      Nothing here yet — {from} to {to}
-    </p>
+    <>
+      {error && (
+        <p className="banner" role="alert">
+          Couldn't load capacity: {error.message} <button onClick={() => refetch()}>Retry</button>
+        </p>
+      )}
+      {data && (
+        <div className={isPlaceholderData || error ? 'grid stale' : 'grid'} aria-busy={isFetching}>
+          {isFetching && <span className="status">Updating…</span>}
+          <table>
+            <thead>
+              <tr>
+                <th>Person</th>
+                <th>Weekly hours</th>
+                {data.weeks.map((w) => (
+                  <th key={w}>{shortDate(w)}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data.people.map((p) => (
+                <Row key={p.id} person={p} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
   )
+}
+
+function Row({ person }: { person: PersonCapacity }) {
+  const [draft, setDraft] = useState<string | null>(null)
+  const save = useUpdateWeeklyHours()
+
+  function submit() {
+    if (draft === null || save.isPending) return
+    const weeklyHours = Number(draft)
+    if (draft.trim() === '' || weeklyHours === person.weekly_hours) {
+      cancel()
+      return
+    }
+    save.mutate(
+      { id: person.id, weeklyHours, previous: person.weekly_hours },
+      { onSuccess: () => setDraft(null) },
+    )
+  }
+
+  function cancel() {
+    setDraft(null)
+    save.reset()
+  }
+
+  return (
+    <tr>
+      <th scope="row">{person.name}</th>
+      <td className="hours">
+        {draft === null ? (
+          <button className="edit" onClick={() => setDraft(String(person.weekly_hours))}>
+            {person.weekly_hours}
+          </button>
+        ) : (
+          <input
+            type="number"
+            min={0}
+            max={168}
+            step={0.5}
+            autoFocus
+            aria-label={`Weekly hours for ${person.name}`}
+            value={draft}
+            readOnly={save.isPending}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={submit}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') submit()
+              if (e.key === 'Escape') cancel()
+            }}
+          />
+        )}
+        {save.isPending && <span className="saving">saving…</span>}
+        {save.isError && (
+          <span className="error" role="alert">
+            {save.error.message}
+          </span>
+        )}
+      </td>
+      {person.allocated.map((allocated, i) => {
+        const capacity = person.capacity[i]
+        const over = allocated > capacity
+        return (
+          <td
+            key={i}
+            className={over ? 'cell over' : allocated === 0 ? 'cell idle' : 'cell'}
+            title={over ? `Over by ${round(allocated - capacity)}h` : undefined}
+          >
+            {round(allocated)} / {round(capacity)}
+          </td>
+        )
+      })}
+    </tr>
+  )
+}
+
+function round(n: number) {
+  return Math.round(n * 10) / 10
 }

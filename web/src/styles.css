@@ -30,3 +30,91 @@ td {
   padding: 0.5rem 0.75rem;
   text-align: left;
 }
+
+.range {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  opacity: 1;
+}
+
+.grid {
+  position: relative;
+  max-height: 75vh;
+  overflow: auto;
+  transition: opacity 0.15s;
+}
+
+.grid.stale {
+  opacity: 0.55;
+}
+
+.grid > .status {
+  position: sticky;
+  left: 0;
+  display: block;
+  font-size: 0.85rem;
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  background: Canvas;
+  z-index: 1;
+}
+
+tbody th {
+  position: sticky;
+  left: 0;
+  background: Canvas;
+  font-weight: normal;
+  white-space: nowrap;
+}
+
+.cell {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.cell.idle {
+  opacity: 0.4;
+}
+
+.cell.over {
+  background: #d92d20;
+  color: #fff;
+  font-weight: 600;
+}
+
+.hours {
+  white-space: nowrap;
+}
+
+.hours input {
+  width: 5rem;
+}
+
+.edit {
+  min-width: 3rem;
+  border: 1px dashed color-mix(in srgb, currentColor 40%, transparent);
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.saving,
+.error {
+  margin-left: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.error {
+  color: #d92d20;
+}
+
+.banner {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d92d20;
+  color: #d92d20;
+}

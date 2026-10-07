@@ -10,7 +10,7 @@ left unfinished. Append as you go; a line or two per entry is right.
 ### Data
 
 - The assignments that look like duplicates aren't. Each person/project/date range has 15 rows: 14 with the same value and one with double it. Added up they give normal hours per day (2, 4, 5, 6 or 8), so I sum every row and treat `hours_per_day` as hours.
-- My first query used `DISTINCT` and every number came out 3x too high. Keeping only the original row would leave one over-allocated cell in the whole dataset, which is also wrong.
+- My first query used `DISTINCT` and the numbers came out wrong (Dee's week of Jan 5 was 67.5h instead of 45h, 1.5x). Keeping only the original row would leave one over-allocated cell in the whole dataset, which is also wrong.
 - Checked by hand: Dee Okafor, week of 2026-01-05, is 45h against 40. Eli Nakamura has 0 capacity and 20h allocated.
 - Only Mon–Fri count. Assignments run over weekends, but weekends add nothing. No holidays.
 - `weekly_hours` is a single current value, so editing it also changes past weeks. The proper fix is capacity with effective dates. The API already returns capacity per week, so that change wouldn't break the response.

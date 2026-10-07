@@ -1,45 +1,35 @@
-:root {
-  color-scheme: light dark;
-  font-family: ui-sans-serif, system-ui, sans-serif;
-}
-
 body {
   margin: 0;
-  padding: 2rem;
+  background: #f7f4f9;
+  color: #2c1338;
 }
 
-h1 {
-  font-size: 1.4rem;
-  margin: 0 0 0.25rem;
-}
-
-.range {
-  margin: 0 0 1.5rem;
-  opacity: 0.6;
-  font-variant-numeric: tabular-nums;
-}
-
-table {
-  border-collapse: collapse;
-  font-variant-numeric: tabular-nums;
-}
-
-th,
-td {
-  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
-  padding: 0.5rem 0.75rem;
-  text-align: left;
-}
-
-.range {
+.topbar {
   display: flex;
-  gap: 0.75rem;
   align-items: center;
+  height: 56px;
+  padding: 0 var(--mantine-spacing-xl);
+  background: #2c1338;
+}
+
+.brand {
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.brand::after {
+  content: '.';
+  color: #e57cd8;
+}
+
+.card {
+  overflow: hidden;
 }
 
 .grid {
-  position: relative;
-  max-height: 75vh;
+  max-height: 72vh;
   overflow: auto;
   transition: opacity 0.15s;
 }
@@ -48,72 +38,107 @@ td {
   opacity: 0.55;
 }
 
-.grid > .status {
-  position: sticky;
-  left: 0;
-  display: block;
-  font-size: 0.85rem;
+.grid table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--mantine-font-size-sm);
+  font-variant-numeric: tabular-nums;
 }
 
-thead th {
+.grid th,
+.grid td {
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--mantine-color-gray-2);
+  white-space: nowrap;
+}
+
+.grid thead th {
   position: sticky;
   top: 0;
-  background: Canvas;
-  z-index: 1;
+  z-index: 2;
+  background: #fff;
+  color: var(--mantine-color-dimmed);
+  font-size: var(--mantine-font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom-color: var(--mantine-color-gray-3);
 }
 
-tbody th {
-  position: sticky;
+.grid thead th:first-child {
   left: 0;
-  background: Canvas;
-  font-weight: normal;
-  white-space: nowrap;
+  z-index: 3;
 }
 
-.cell {
-  white-space: nowrap;
+.grid thead .updating {
+  color: var(--mantine-color-violet-7);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.grid thead th.week {
   text-align: right;
 }
 
+.grid thead th.current {
+  color: var(--mantine-color-violet-7);
+}
+
+.grid tbody th {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: #fff;
+  font-weight: normal;
+}
+
+.grid tbody tr:hover th,
+.grid tbody tr:hover td {
+  background-color: var(--mantine-color-violet-0);
+}
+
+/* Shrink-to-fit the label columns so weeks get the spare width. */
+.grid tr > :first-child,
+.grid .hours {
+  width: 1%;
+}
+
+.grid .cell {
+  position: relative;
+  min-width: 84px;
+  text-align: right;
+}
+
+/* Thin utilisation bar along the bottom of each week cell. */
+.cell .bar {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 5px;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(var(--mantine-color-violet-5), var(--mantine-color-violet-5)) left / var(--fill) 100%
+      no-repeat,
+    var(--mantine-color-gray-2);
+}
+
 .cell.idle {
-  opacity: 0.4;
+  color: var(--mantine-color-gray-6);
 }
 
-.cell.over {
-  background: #d92d20;
+.cell.idle .bar {
+  display: none;
+}
+
+.cell.over,
+.grid tbody tr:hover td.cell.over {
+  background: var(--mantine-color-coral-8);
   color: #fff;
-  font-weight: 600;
+  font-weight: 700;
 }
 
-.hours {
-  white-space: nowrap;
-}
-
-.hours input {
-  width: 5rem;
-}
-
-.edit {
-  min-width: 3rem;
-  border: 1px dashed color-mix(in srgb, currentColor 40%, transparent);
-  background: none;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-
-.saving,
-.error {
-  margin-left: 0.5rem;
-  font-size: 0.8rem;
-}
-
-.error {
-  color: #d92d20;
-}
-
-.banner {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #d92d20;
-  color: #d92d20;
+.cell.over .bar {
+  background: rgb(255 255 255 / 0.6);
 }

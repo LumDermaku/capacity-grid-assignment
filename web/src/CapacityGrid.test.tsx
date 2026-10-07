@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom/vitest'
+import { MantineProvider } from '@mantine/core'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -34,9 +35,11 @@ afterEach(() => {
 
 async function editTo(value: string) {
   render(
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      <CapacityGrid from="2026-01-05" to="2026-01-11" />
-    </QueryClientProvider>,
+    <MantineProvider>
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <CapacityGrid from="2026-01-05" to="2026-01-11" />
+      </QueryClientProvider>
+    </MantineProvider>,
   )
   expect(await screen.findByText('45 / 40')).toHaveClass('over')
   fireEvent.click(screen.getByRole('button', { name: '40' }))

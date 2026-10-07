@@ -14,6 +14,10 @@ export function addDays(iso: string, days: number): string {
   return format(new Date(parse(iso).getTime() + days * DAY_MS))
 }
 
+export function daysBetween(from: string, to: string): number {
+  return Math.round((parse(to).getTime() - parse(from).getTime()) / DAY_MS)
+}
+
 export function mondayOf(iso: string): string {
   return addDays(iso, -((parse(iso).getUTCDay() + 6) % 7))
 }

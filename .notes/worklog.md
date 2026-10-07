@@ -52,3 +52,13 @@ Not asked for, but cheap and I thought they helped. TanStack Query is covered ab
 ### Tests
 
 - Cut the suite from 7 tests to 3 to keep it small, as the brief asks. Kept the parts I'd be nervous to change: the 26-week cap moving the other end of the range, a failed save rolling back while keeping the typed value and focus, and blur after a failure (sends nothing until the value is corrected, then saves and the grid updates). Dropped the simple week-snapping tests and the plain successful-save test, which the blur test now covers.
+
+### UI pass (Mantine)
+
+- Added Mantine (core + dates) with a Toggl-style theme: plum top bar, violet accents, coral for over-allocation. Picked it because it's made for client-side SPAs, needs no Tailwind/PostCSS setup, and comes with date pickers.
+- The grid is still a plain `<table>` with sticky header and name column. Mantine's Table would just wrap the same markup. Each week cell now has a thin utilisation bar, and the current week is highlighted.
+- Kept a native number input (Mantine `Input`, not `NumberInput`) for editing, so the existing save/rollback tests and keyboard behaviour stay the same.
+- Tests needed `matchMedia`/`ResizeObserver` stubs (`src/test-setup.ts`) and a `MantineProvider` wrapper.
+- After adding deps, the web container must be restarted (`docker compose restart web`) so its `npm install` picks them up.
+- Bug found after the restyle: the date picker's calendar was 1,000,034px wide and only the Monday column was visible. Cause: the grid's bare `table`/`th`/`td` CSS leaked into Mantine's calendar, which is also a `<table>`. Fixed by scoping every table rule under `.grid`. jsdom can't measure layout, so there's no unit test for this. I checked it in the browser by measuring the dropdown width.
+- Swapped `DatePickerInput` for `DateInput` so dates can be typed as well as picked ("Nov 4, 2026" or ISO). Typed dates still snap to whole weeks via `normalizeRange`.

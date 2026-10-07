@@ -11,7 +11,7 @@ export function App() {
   })
 
   function shift(weeks: number) {
-    setRange({ from: addDays(range.from, weeks * 7), to: addDays(range.to, weeks * 7) })
+    setRange((prev) => ({ from: addDays(prev.from, weeks * 7), to: addDays(prev.to, weeks * 7) }))
   }
 
   function change(edge: keyof Range, value: string) {

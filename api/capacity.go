@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 )
@@ -66,13 +67,13 @@ func (s *server) handleCapacity(w http.ResponseWriter, r *http.Request) {
 	to = mondayOf(to).AddDate(0, 0, 6)
 	weekCount := int(to.Sub(from).Hours()/24+1) / 7
 	if weekCount > maxWeeks {
-		writeError(w, http.StatusBadRequest, "range is limited to 26 weeks")
+		writeError(w, http.StatusBadRequest, fmt.Sprintf("range is limited to %d weeks", maxWeeks))
 		return
 	}
 
 	rows, err := s.db.Query(r.Context(), capacityQuery, from, to)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, r, err)
 		return
 	}
 	defer rows.Close()
@@ -97,7 +98,7 @@ func (s *server) handleCapacity(w http.ResponseWriter, r *http.Request) {
 			allocated   float64
 		)
 		if err := rows.Scan(&id, &name, &weeklyHours, &week, &allocated); err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeInternalError(w, r, err)
 			return
 		}
 		if p == nil || p.ID != id {
@@ -114,7 +115,7 @@ func (s *server) handleCapacity(w http.ResponseWriter, r *http.Request) {
 		p.Capacity = append(p.Capacity, weeklyHours)
 	}
 	if err := rows.Err(); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, r, err)
 		return
 	}
 

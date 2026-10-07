@@ -1,10 +1,4 @@
-export type PersonCapacity = {
-  id: number
-  name: string
-  weekly_hours: number
-  allocated: number[]
-  capacity: number[]
-}
+export type PersonCapacity = Person & { allocated: number[]; capacity: number[] }
 
 export type Capacity = {
   from: string
@@ -38,15 +32,4 @@ export function updateWeeklyHours(id: number, weeklyHours: number) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ weekly_hours: weeklyHours }),
   })
-}
-
-export function withWeeklyHours(data: Capacity, id: number, weeklyHours: number): Capacity {
-  return {
-    ...data,
-    people: data.people.map((p) =>
-      p.id === id
-        ? { ...p, weekly_hours: weeklyHours, capacity: p.capacity.map(() => weeklyHours) }
-        : p,
-    ),
-  }
 }

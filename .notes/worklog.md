@@ -22,12 +22,14 @@ left unfinished. Append as you go; a line or two per entry is right.
 - Over-allocated means allocated > capacity. Any allocation against 0 capacity counts.
 - I used pgx because it was already set up in `main.go`. sqlx wasn't worth adding for one query.
 - `PATCH /api/people/{id}` takes `{"weekly_hours": n}` and returns the updated person. 400 for a bad id or body, 422 outside 0–168, 404 for an unknown id.
+- 500s log the real error and return `"internal error"`, so database details stay out of the UI.
 
 ### Grid
 
 - Saves are optimistic: the new capacity shows immediately, and the current range is refetched once the save finishes. If the save fails, only that person's old value is restored, so edits to other rows aren't lost.
 - If a save fails, the input keeps what you typed and shows the error, and the grid goes back to the old numbers. Enter retries, Esc cancels.
 - Found in the browser: the input was disabled while saving, which drops focus, so after a failure the keyboard did nothing. Changed it to read-only.
+- Found in review: blur also called submit, so clicking away after a failure re-sent the failed PATCH. Now clicking away without editing sends nothing and keeps the error. Editing the value clears the error, so a corrected value saves on blur like any other edit. Enter still retries as-is.
 - On first load it shows "Loading…". When changing weeks the old grid stays visible but dimmed. A failed load shows an error with a Retry button.
 
 ### Not done
@@ -35,3 +37,18 @@ left unfinished. Append as you go; a line or two per entry is right.
 - Paging or virtualization for thousands of rows.
 - Capacity history, holidays and time off.
 - A Go test for the query. Only checked by hand and with curl.
+
+### Small extras, not in the brief
+
+Not asked for, but cheap and I thought they helped. TanStack Query is covered above.
+
+- Sticky header row and name column, so you keep your bearings when scrolling a big grid.
+- Weeks with nothing allocated are dimmed, so the red cells stand out more.
+- Hovering a red cell shows "Over by Xh".
+- PATCH rejects bodies over 1 KB and unknown fields.
+- A failed load retries once before showing the error, and the grid doesn't refetch every time the window gets focus.
+- 500s return a generic "internal error" and log the real one (came out of code review).
+
+### Tests
+
+- Cut the suite from 7 tests to 3 to keep it small, as the brief asks. Kept the parts I'd be nervous to change: the 26-week cap moving the other end of the range, a failed save rolling back while keeping the typed value and focus, and blur after a failure (sends nothing until the value is corrected, then saves and the grid updates). Dropped the simple week-snapping tests and the plain successful-save test, which the blur test now covers.

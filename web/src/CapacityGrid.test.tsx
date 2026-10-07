@@ -47,16 +47,6 @@ async function editTo(value: string) {
 }
 
 describe('editing weekly hours', () => {
-  it('updates capacity and over-allocation after a successful save', async () => {
-    patchResponse = () => {
-      weeklyHours = 50
-      return json({ id: 4, name: 'Dee Okafor', weekly_hours: 50 })
-    }
-    await editTo('50')
-    expect(await screen.findByText('45 / 50')).not.toHaveClass('over')
-    expect(await screen.findByRole('button', { name: '50' })).toBeInTheDocument()
-  })
-
   it('rolls back and keeps the typed value when the save fails', async () => {
     patchResponse = () => json({ error: 'weekly hours must be between 0 and 168' }, 422)
     const input = await editTo('200')
@@ -65,5 +55,29 @@ describe('editing weekly hours', () => {
     expect(input).toHaveValue(200)
     expect(input).toHaveFocus()
     expect(input).not.toHaveAttribute('readonly')
+  })
+
+  it('after a failed save, blur sends nothing until the value is corrected', async () => {
+    let patches = 0
+    patchResponse = () => {
+      patches++
+      return json({ error: 'weekly hours must be between 0 and 168' }, 422)
+    }
+    const input = await editTo('200')
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+
+    fireEvent.blur(input)
+    await new Promise((r) => setTimeout(r, 0))
+    expect(patches).toBe(1)
+    expect(input).toHaveValue(200)
+
+    patchResponse = () => {
+      weeklyHours = 50
+      return json({ id: 4, name: 'Dee Okafor', weekly_hours: 50 })
+    }
+    fireEvent.change(input, { target: { value: '50' } })
+    fireEvent.blur(input)
+    expect(await screen.findByText('45 / 50')).not.toHaveClass('over')
+    expect(await screen.findByRole('button', { name: '50' })).toBeInTheDocument()
   })
 })

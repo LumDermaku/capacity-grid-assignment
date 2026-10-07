@@ -85,8 +85,13 @@ function Row({ person }: { person: PersonCapacity }) {
             aria-label={`Weekly hours for ${person.name}`}
             value={draft}
             readOnly={save.isPending}
-            onChange={(e) => setDraft(e.target.value)}
-            onBlur={submit}
+            onChange={(e) => {
+              setDraft(e.target.value)
+              if (save.isError) save.reset()
+            }}
+            // After a failure, clicking away without editing keeps the error and
+            // sends nothing; editing clears it, so blur saves the new value.
+            onBlur={save.isError ? undefined : submit}
             onKeyDown={(e) => {
               if (e.key === 'Enter') submit()
               if (e.key === 'Escape') cancel()

@@ -1,9 +1,8 @@
 import { Alert, Avatar, Button, Group, Input, Loader, Skeleton, Stack, Text, VisuallyHidden } from '@mantine/core'
 import { IconAlertCircle } from '@tabler/icons-react'
 import { useState } from 'react'
-import type { PersonCapacity } from './api'
-import { mondayOf, shortDate, today } from './dates'
-import { useCapacity, useUpdateWeeklyHours } from './queries'
+import { mondayOf, shortDate, today } from '../dates'
+import { errorMessage, useCapacity, useUpdateWeeklyHours, type CapacityRow } from '../lib/capacity'
 
 type Props = {
   from: string
@@ -14,16 +13,7 @@ export function CapacityGrid({ from, to }: Props) {
   const { data, error, isPending, isFetching, isPlaceholderData, refetch } = useCapacity(from, to)
   const currentWeek = mondayOf(today())
 
-  if (isPending) {
-    return (
-      <Stack gap="sm" p="lg" aria-busy>
-        <VisuallyHidden>Loading…</VisuallyHidden>
-        {Array.from({ length: 6 }, (_, i) => (
-          <Skeleton key={i} height={28} />
-        ))}
-      </Stack>
-    )
-  }
+  if (isPending) return <GridSkeleton />
 
   return (
     <>
@@ -36,7 +26,7 @@ export function CapacityGrid({ from, to }: Props) {
           title="Couldn't load capacity"
         >
           <Group justify="space-between">
-            <Text size="sm">{error.message}</Text>
+            <Text size="sm">{errorMessage(error)}</Text>
             <Button size="xs" color="coral" variant="light" onClick={() => refetch()}>
               Retry
             </Button>
@@ -67,8 +57,8 @@ export function CapacityGrid({ from, to }: Props) {
               </tr>
             </thead>
             <tbody>
-              {data.people.map((p) => (
-                <Row key={p.id} person={p} />
+              {data.rows.map((r) => (
+                <Row key={r.person.id} row={r} />
               ))}
             </tbody>
           </table>
@@ -78,21 +68,31 @@ export function CapacityGrid({ from, to }: Props) {
   )
 }
 
-function Row({ person }: { person: PersonCapacity }) {
+// Also the SPA's HydrateFallback, so first paint matches the loading state.
+export function GridSkeleton() {
+  return (
+    <Stack gap="sm" p="lg" aria-busy>
+      <VisuallyHidden>Loading…</VisuallyHidden>
+      {Array.from({ length: 6 }, (_, i) => (
+        <Skeleton key={i} height={28} />
+      ))}
+    </Stack>
+  )
+}
+
+function Row({ row }: { row: CapacityRow }) {
+  const { person } = row
   const [draft, setDraft] = useState<string | null>(null)
   const save = useUpdateWeeklyHours()
 
   function submit() {
     if (draft === null || save.isPending) return
     const weeklyHours = Number(draft)
-    if (draft.trim() === '' || weeklyHours === person.weekly_hours) {
+    if (draft.trim() === '' || weeklyHours === person.weeklyHours) {
       cancel()
       return
     }
-    save.mutate(
-      { id: person.id, weeklyHours, previous: person.weekly_hours },
-      { onSuccess: () => setDraft(null) },
-    )
+    void save.mutate(person, weeklyHours, () => setDraft(null))
   }
 
   function cancel() {
@@ -113,8 +113,8 @@ function Row({ person }: { person: PersonCapacity }) {
       <td className="hours">
         <Group gap={6} wrap="nowrap">
           {draft === null ? (
-            <Button variant="light" size="compact-sm" miw={48} onClick={() => setDraft(String(person.weekly_hours))}>
-              {person.weekly_hours}
+            <Button variant="light" size="compact-sm" miw={48} onClick={() => setDraft(String(person.weeklyHours))}>
+              {person.weeklyHours}
             </Button>
           ) : (
             <Input
@@ -128,14 +128,14 @@ function Row({ person }: { person: PersonCapacity }) {
               aria-label={`Weekly hours for ${person.name}`}
               value={draft}
               readOnly={save.isPending}
-              error={save.isError}
+              error={!!save.error}
               onChange={(e) => {
                 setDraft(e.target.value)
-                if (save.isError) save.reset()
+                if (save.error) save.reset()
               }}
               // After a failure, clicking away without editing keeps the error and
               // sends nothing; editing clears it, so blur saves the new value.
-              onBlur={save.isError ? undefined : submit}
+              onBlur={save.error ? undefined : submit}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') submit()
                 if (e.key === 'Escape') cancel()
@@ -149,14 +149,14 @@ function Row({ person }: { person: PersonCapacity }) {
             </Group>
           )}
         </Group>
-        {save.isError && (
+        {save.error && (
           <Text size="xs" c="coral" mt={4} role="alert">
-            {save.error.message}
+            {errorMessage(save.error)}
           </Text>
         )}
       </td>
-      {person.allocated.map((allocated, i) => {
-        const capacity = person.capacity[i]
+      {row.allocated.map((allocated, i) => {
+        const capacity = row.capacity[i]
         const over = allocated > capacity
         const fill = capacity > 0 ? Math.min(allocated / capacity, 1) : allocated > 0 ? 1 : 0
         return (

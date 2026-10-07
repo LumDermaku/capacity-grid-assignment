@@ -1,0 +1,25 @@
+"Calendar date as YYYY-MM-DD."
+scalar Date
+
+type Query {
+    "Allocated vs capacity per person per week. Range is widened to whole ISO weeks (Mon–Sun), max 26 weeks."
+    capacity(from: Date!, to: Date!): CapacityRange!
+}
+
+type CapacityRange {
+    "The widened range actually used."
+    from: Date!
+    to: Date!
+    "Monday of each week."
+    weeks: [Date!]!
+    rows: [CapacityRow!]!
+}
+
+"Not normalised in Apollo: its arrays are per range."
+type CapacityRow {
+    person: Person!
+    "Hours, index-aligned with weeks."
+    allocated: [Float!]!
+    "Per week on purpose, so effective-dated capacity later doesn't change the contract."
+    capacity: [Float!]!
+}

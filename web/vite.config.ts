@@ -1,9 +1,10 @@
 /// <reference types="vitest/config" />
+import { reactRouter } from '@react-router/dev/vite'
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-  plugins: [react()],
+  // The React Router plugin doesn't run under Vitest.
+  plugins: [!process.env.VITEST && reactRouter()],
   server: {
     port: 3000,
     proxy: {
@@ -13,6 +14,6 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     passWithNoTests: true,
-    setupFiles: ['./src/test-setup.ts'],
+    setupFiles: ['./app/test-setup.ts'],
   },
 })

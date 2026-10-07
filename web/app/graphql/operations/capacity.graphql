@@ -1,0 +1,24 @@
+query Capacity($from: Date!, $to: Date!) {
+    capacity(from: $from, to: $to) {
+        from
+        to
+        weeks
+        rows {
+            person {
+                id
+                name
+                weeklyHours
+            }
+            allocated
+            capacity
+        }
+    }
+}
+
+mutation UpdateWeeklyHours($id: ID!, $weeklyHours: Float!) {
+    updateWeeklyHours(id: $id, weeklyHours: $weeklyHours) {
+        id
+        name
+        weeklyHours
+    }
+}

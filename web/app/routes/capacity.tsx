@@ -3,9 +3,10 @@ import { DateInput } from '@mantine/dates'
 import { IconCalendar, IconChevronLeft, IconChevronRight } from '@tabler/icons-react'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
-import { useState } from 'react'
-import { CapacityGrid } from './CapacityGrid'
-import { addDays, daysBetween, mondayOf, normalizeRange, today, type Range } from './dates'
+import { useEffect, useRef, type Dispatch, type ReactNode, type SetStateAction } from 'react'
+import { useSearchParams } from 'react-router'
+import { CapacityGrid } from '../components/CapacityGrid'
+import { addDays, daysBetween, mondayOf, normalizeRange, today, type Range } from '../dates'
 
 const DEFAULT_WEEKS = 8
 const DATE_FORMAT = 'MMM D, YYYY'
@@ -18,12 +19,57 @@ function parseDate(text: string): string | null {
   return d.isValid() ? d.format('YYYY-MM-DD') : null
 }
 
-export function App() {
-  const [range, setRange] = useState<Range>(() => {
-    const from = mondayOf(today())
-    return { from, to: addDays(from, DEFAULT_WEEKS * 7 - 1) }
+export function defaultRange(): Range {
+  const from = mondayOf(today())
+  return { from, to: addDays(from, DEFAULT_WEEKS * 7 - 1) }
+}
+
+// The range lives in the URL (?from=&to=), so it can be shared and the back
+// button works. Missing or invalid params fall back to the default.
+function rangeFrom(params: URLSearchParams): Range {
+  const from = parseDate(params.get('from') ?? '')
+  const to = parseDate(params.get('to') ?? '')
+  return from && to ? normalizeRange({ from, to }, 'from') : defaultRange()
+}
+
+// Like useState, but the range lives in the URL. Navigations commit
+// asynchronously, so an updater builds on the last range asked for, not the one
+// still on screen: three quick "next week" clicks move three weeks.
+function useRangeParam(): [Range, Dispatch<SetStateAction<Range>>] {
+  const [params, setParams] = useSearchParams()
+  const range = rangeFrom(params)
+  const requested = useRef<Range | null>(null)
+
+  useEffect(() => {
+    if (requested.current?.from === range.from && requested.current.to === range.to) requested.current = null
   })
 
+  function setRange(action: SetStateAction<Range>) {
+    const next = typeof action === 'function' ? action(requested.current ?? range) : action
+    requested.current = next
+    setParams(next)
+  }
+
+  return [range, setRange]
+}
+
+export default function Capacity() {
+  const [range, setRange] = useRangeParam()
+  return (
+    <CapacityPage range={range} setRange={setRange}>
+      <CapacityGrid from={range.from} to={range.to} />
+    </CapacityPage>
+  )
+}
+
+type PageProps = {
+  range: Range
+  setRange: Dispatch<SetStateAction<Range>>
+  children: ReactNode
+}
+
+// The page chrome around the grid; also rendered by the SPA's HydrateFallback.
+export function CapacityPage({ range, setRange, children }: PageProps) {
   function shift(weeks: number) {
     setRange((prev) => ({ from: addDays(prev.from, weeks * 7), to: addDays(prev.to, weeks * 7) }))
   }
@@ -89,7 +135,7 @@ export function App() {
           </Group>
         </Group>
         <Paper withBorder shadow="xs" radius="lg" className="card">
-          <CapacityGrid from={range.from} to={range.to} />
+          {children}
         </Paper>
       </Box>
     </>

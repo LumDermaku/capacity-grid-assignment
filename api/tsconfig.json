@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+        "types": ["bun"],
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "target": "ESNext",
+        "verbatimModuleSyntax": false,
+        "allowJs": true,
+        "resolveJsonModule": true,
+        "moduleDetection": "force",
+        "strict": true,
+        "noUncheckedIndexedAccess": true,
+        "moduleResolution": "Bundler",
+        "module": "ESNext",
+        "noEmit": true,
+        "lib": ["ESNext"]
+    },
+    "include": ["**/*.ts"],
+    "exclude": ["node_modules"]
+}

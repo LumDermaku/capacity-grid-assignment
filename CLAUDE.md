@@ -1,12 +1,12 @@
 # Capacity
 
 Team capacity view: who is allocated how much, week by week, and who is over-committed.
-Go API + Postgres, React frontend, all wired through Docker Compose.
+Bun + GraphQL Yoga API + Postgres, React Router (SPA) + Apollo frontend, all wired through Docker Compose.
 
 ## Quick Reference
 
-- **Go 1.26**, PostgreSQL 17, stdlib `net/http` (`ServeMux` pattern routing), pgx/v5
-- **React 19**, TypeScript, Vite
+- **Bun**, GraphQL Yoga, PostgreSQL 17 via Bun's built-in `SQL` client, pino logging, graphql-codegen
+- **React 19**, TypeScript, React Router v8 framework mode (`ssr: false`), Apollo Client 4, Mantine 8, Vite
 - Everything runs in Compose. There is no local toolchain to install.
 
 ## Key Commands
@@ -57,8 +57,8 @@ reads clearly. Keep it short — a line or two per entry.
 
 ## Layout
 
-- `api/` — Go service. `main.go` wires the server; `capacity.go` and `people.go` are the endpoints.
-- `web/` — Vite + React app. `App.tsx` sets the range; `CapacityGrid.tsx` renders it.
+- `api/` — Bun service. `src/index.ts` wires the server (`GET /api/health`, `POST /api/graphql`); `src/models/Capacity` and `src/models/Person` hold the schema and resolvers. `bun run codegen` regenerates types for both apps.
+- `web/` — React Router SPA. `app/routes/capacity.tsx` sets the range (in the URL); `app/components/CapacityGrid.tsx` renders it; `app/lib/capacity.ts` holds the Apollo hooks.
 - `db/` — `schema.sql` and `seed.sql`, loaded automatically on first `make up`.
 - `.notes/` — your working notes.
 

@@ -1,0 +1,9 @@
+type Person {
+    id: ID!
+    name: String!
+    weeklyHours: Float!
+}
+
+type Mutation {
+    updateWeeklyHours(id: ID!, weeklyHours: Float!): Person!
+}
